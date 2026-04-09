@@ -53,72 +53,92 @@ app.post('/api/posts', (req, res) => {
   res.json({ ok: true, post });
 });
 
-// ===== FETCH SINGLE POST METADATA =====
+// ===== FETCH SINGLE POST METADATA (via embed — no login, no browser) =====
 const https = require('https');
-const http = require('http');
 
-function fetchUrl(url) {
+function fetchHtml(url) {
   return new Promise((resolve, reject) => {
-    const mod = url.startsWith('https') ? https : http;
-    const req = mod.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      timeout: 10000
-    }, (res) => {
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' } }, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetchUrl(res.headers.location).then(resolve).catch(reject);
+        return fetchHtml(res.headers.location).then(resolve).catch(reject);
       }
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
-    });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+      let d = '';
+      res.on('data', c => d += c);
+      res.on('end', () => resolve(d));
+    }).on('error', reject);
   });
 }
 
-function parseMeta(html) {
-  const result = { title: '', description: '', type: '', date: '', likes: 0, comments: 0 };
+async function scrapeInstagramPost(url) {
+  // Use /embed/captioned/ — public, has caption + likes + comments
+  const embedUrl = url.replace(/\/?(\?.*)?$/, '') + '/embed/captioned/';
+  const html = await fetchHtml(embedUrl);
 
-  // Parse og:description - often contains "X likes, Y comments - Author: caption"
-  const ogDesc = html.match(/<meta\s+(?:property|name)="og:description"\s+content="([^"]*)"/i);
-  if (ogDesc) {
-    result.description = ogDesc[1];
-    // Try to parse likes/comments from "123 likes, 45 comments"
-    const likesMatch = ogDesc[1].match(/([\d,]+)\s*likes?/i);
-    const commentsMatch = ogDesc[1].match(/([\d,]+)\s*comments?/i);
-    if (likesMatch) result.likes = parseInt(likesMatch[1].replace(/,/g, ''));
-    if (commentsMatch) result.comments = parseInt(commentsMatch[1].replace(/,/g, ''));
+  const result = { caption: '', date: '', likes: 0, comments: 0, isCollab: false, authors: [], features: [] };
+
+  // Caption
+  const capMatch = html.match(/class="Caption"[^>]*>([\s\S]*?)<\/div>/);
+  if (capMatch) {
+    result.caption = capMatch[1].replace(/<[^>]*>/g, '').trim().substring(0, 300);
+    // Remove leading username from caption
+    result.caption = result.caption.replace(/^[\w.]+/, '').trim();
   }
 
-  // Parse og:title
-  const ogTitle = html.match(/<meta\s+(?:property|name)="og:title"\s+content="([^"]*)"/i);
-  if (ogTitle) result.title = ogTitle[1];
+  // Likes
+  const likeMatch = html.match(/([\d,]+)\s*likes?/i);
+  if (likeMatch) result.likes = parseInt(likeMatch[1].replace(/,/g, ''));
 
-  // Parse title tag
-  const titleTag = html.match(/<title>([^<]*)<\/title>/i);
-  if (titleTag) result.title = result.title || titleTag[1];
+  // Comments
+  const commentMatch = html.match(/([\d,]+)\s*comments?/i);
+  if (commentMatch) result.comments = parseInt(commentMatch[1].replace(/,/g, ''));
 
-  // Try to find date from JSON-LD or time element
-  const timeMatch = html.match(/"uploadDate"\s*:\s*"([^"]*)"/);
-  if (timeMatch) result.date = timeMatch[1];
+  // Date
+  const dateMatch = html.match(/datetime="([^"]*)"/);
+  if (dateMatch) result.date = dateMatch[1];
+  // Fallback: look for text date
+  if (!result.date) {
+    const textDate = html.match(/title="([^"]*\d{4}[^"]*)"/);
+    if (textDate) result.date = textDate[1];
+  }
 
-  // Check if @openart_ai or openart is mentioned
-  const lowerHtml = (result.description + ' ' + result.title).toLowerCase();
-  result.mentionsOpenArt = lowerHtml.includes('openart') || lowerHtml.includes('@openart');
+  // Authors — find instagram.com/username links
+  const authorMatches = [...html.matchAll(/instagram\.com\/([\w.]+)\//g)]
+    .map(m => m[1])
+    .filter(a => !['p','reel','explore','static','rsrc.php','v','developer','about','accounts'].includes(a));
+  result.authors = [...new Set(authorMatches)];
+  result.isCollab = result.authors.includes('openart_ai');
 
-  // Check collab vs mention
-  if (lowerHtml.includes('collab')) result.type = 'collab';
-  else if (result.mentionsOpenArt) result.type = '@mention';
+  // Features + OpenArt mention
+  const lower = result.caption.toLowerCase();
+  const featureList = ['vellum', 'suite', 'kling', '3d worlds', 'wonder'];
+  result.features = featureList.filter(f => lower.includes(f));
+  result.mentionsOpenArt = lower.includes('openart') || lower.includes('@openart_ai') || result.isCollab;
 
-  // Check for branded features
-  const features = ['vellum', 'suite', 'kling', 'wonder'];
-  result.branded = features.some(f => lowerHtml.includes(f));
+  // Format date
+  let formattedDate = '';
+  if (result.date) {
+    try {
+      const d = new Date(result.date);
+      if (!isNaN(d)) {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        formattedDate = months[d.getMonth()] + ' ' + d.getDate();
+      }
+    } catch(_) {}
+  }
 
-  return result;
+  return {
+    ok: true,
+    caption: result.caption,
+    date: formattedDate,
+    likes: result.likes,
+    comments: result.comments,
+    isCollab: result.isCollab,
+    authors: result.authors,
+    mentionsOpenArt: result.mentionsOpenArt,
+    branded: result.features.length > 0,
+    features: result.features,
+    type: result.isCollab ? 'collab' : (result.mentionsOpenArt ? '@mention' : '')
+  };
 }
 
 app.get('/api/fetch-post', async (req, res) => {
@@ -126,30 +146,10 @@ app.get('/api/fetch-post', async (req, res) => {
   if (!url) return res.status(400).json({ error: 'url required' });
 
   try {
-    const html = await fetchUrl(url);
-    const meta = parseMeta(html);
-
-    // Format date to "Mon DD" format
-    let formattedDate = '';
-    if (meta.date) {
-      const d = new Date(meta.date);
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      formattedDate = months[d.getMonth()] + ' ' + d.getDate();
-    }
-
-    res.json({
-      ok: true,
-      title: meta.title,
-      caption: meta.description,
-      date: formattedDate,
-      likes: meta.likes,
-      comments: meta.comments,
-      mentionsOpenArt: meta.mentionsOpenArt,
-      type: meta.type,
-      branded: meta.branded,
-      raw: { ogTitle: meta.title, ogDesc: meta.description }
-    });
+    const data = await scrapeInstagramPost(url);
+    res.json(data);
   } catch (e) {
+    console.error('Fetch post error:', e.message);
     res.json({ ok: false, error: e.message });
   }
 });

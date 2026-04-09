@@ -331,7 +331,7 @@
 </div>
 
 <script>
-const WEEKS = ['Feb 9','Feb 16','Feb 23','Mar 2','Mar 9','Mar 16','Mar 23'];
+const WEEKS = ['Feb 9','Feb 16','Feb 23','Mar 2','Mar 9','Mar 16','Mar 23','Mar 30','Apr 6'];
 
 const influencers = [
   {
@@ -342,10 +342,10 @@ const influencers = [
     startDate: "Feb 23",
     contract: { period: "—", deliverable: "Branded Posts", cash: "—", credits: "—", affiliate: "—" },
     openartPosts: [
-      { text: "@<span class='mention'>openart_ai</span> — Vellum skincare for AI models", time: "Mar 14", likes: 297, comments: 35, views: 15000, url: "https://www.instagram.com/p/DV4IPyDCHRy/", branded: true },
-      { text: "@<span class='mention'>openart_ai</span> — Vellum on @openart_ai is doing its job too well 👀", time: "Mar 16", likes: 990, comments: 65, views: 42000, url: "https://www.instagram.com/p/DV9MyM8iEAN/", branded: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — THE LOST WORLD", time: "Mar 18", likes: 361, comments: 28, views: 18000, url: "https://www.instagram.com/p/DWCRFhFiOjd/", collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 20", likes: 151, comments: 12, views: 8000, url: "https://www.instagram.com/p/DWHN1-VCOCZ/", collab: true }
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Skincare for AI models? Vellum adds real skin texture", time: "Mar 14", likes: 314, comments: 40, url: "https://www.instagram.com/p/DV4IPyDCHRy/", branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum is doing its job too well. We retouch because they're too detailed now", time: "Mar 16", likes: 1000, comments: 39, url: "https://www.instagram.com/p/DV9MyM8iEAN/", branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — THE LOST WORLD 2025", time: "Mar 18", likes: 390, comments: 37, url: "https://www.instagram.com/p/DWCRFhFiOjd/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Back to your regularly scheduled programming", time: "Mar 20", likes: 173, comments: 34, url: "https://www.instagram.com/p/DWHN1-VCOCZ/", collab: true }
     ],
     otherPosts: []
   },
@@ -357,10 +357,10 @@ const influencers = [
     startDate: "Feb 9",
     contract: { period: "6 months", deliverable: "1 post/week, Bio: @OpenArt Ambassador", cash: "$60,000", credits: "2 acc, Infinite + 20K/d", affiliate: "40% rev sharing" },
     openartPosts: [
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — How could I say no to @openart_ai it's a brand I love 💕", time: "Feb 24", url: "https://www.instagram.com/p/DVJgNLoCCTs/", collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum skincare finally available for all you Mortales", time: "Mar 10", url: "https://www.instagram.com/p/DVtj1mGiPSF/", branded: true, collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — not telling you everything...but monday. Clear your schedule", time: "Mar 20", url: "https://www.instagram.com/p/DWHSUYYCG7r/", collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — AI Personality of the Year Ambassadors 2026", time: "Mar 26", url: "https://www.instagram.com/p/DWW8Y-hiLGp/", collab: true }
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — How could I say no to @openart_ai it's a brand I love", time: "Feb 24", url: "https://www.instagram.com/p/DVJgNLoCCTs/", comments: 125, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — My skincare is finally available in @openart_ai. Vellum", time: "Mar 10", url: "https://www.instagram.com/p/DVtj1mGiPSF/", comments: 150, branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — not telling you everything...but @openart_ai monday. Clear your schedule", time: "Mar 20", url: "https://www.instagram.com/p/DWHSUYYCG7r/", comments: 101, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — AI Personality of the Year 2026 Ambassadors", time: "Mar 26", url: "https://www.instagram.com/p/DWW8Y-hiLGp/", likes: 458, comments: 41, collab: true }
     ],
     otherPosts: []
   },
@@ -378,7 +378,6 @@ const influencers = [
       { text: "Collab w/ <span class='mention'>@openart_ai</span> — The world may not see the real you, but I know your heart", time: "Feb 19", url: "https://www.instagram.com/p/DU7wwA6AC7O/", likes: 67400, comments: 2500, collab: true },
       { text: "Collab w/ <span class='mention'>@openart_ai</span> — Give your love freely but protect your heart", time: "Feb 25", url: "https://www.instagram.com/p/DVMkG2iCR4g/", likes: 5400, comments: 510, collab: true },
       { text: "Collab w/ <span class='mention'>@openart_ai</span> — Your love is everything to me", time: "Mar 7", url: "https://www.instagram.com/p/DVk3WU-NS9F/", likes: 12200, comments: 688, collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 14", collab: true },
       { text: "Collab w/ <span class='mention'>@openart_ai</span> — Every day with you feels like a beautiful dream", time: "Mar 19", url: "https://www.instagram.com/p/DWE7YnWCXIV/", likes: 4391, comments: 120, collab: true },
       { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 26", url: "https://www.instagram.com/p/DWVMA3LjTJD/", likes: 3200, comments: 95, collab: true }
     ],
@@ -392,12 +391,12 @@ const influencers = [
     startDate: "Feb 16",
     contract: { period: "4 months", deliverable: "1 post/week + MV with OA watermark, Bio", cash: "$5,000", credits: "Infinite Plan", affiliate: "1 full MV" },
     openartPosts: [
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — beautiful weekend...This video was created using @openart_ai", time: "Feb 27", url: "https://www.instagram.com/p/DVQ9m9GDHkT/", likes: 8400, comments: 741, collab: true },
-      { text: "@<span class='mention'>openart_ai</span> — Sparkle, marble...Created with @openart_ai", time: "Mar 5", url: "https://www.instagram.com/p/DVgKS98DMN5/", likes: 3200, comments: 315 },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Just a smile to start the weekend right. Created with @openart_ai", time: "Mar 6", url: "https://www.instagram.com/p/DVizPuXjGRy/", likes: 4900, comments: 430, collab: true },
-      { text: "@<span class='mention'>openart_ai</span> — Little sparkle...Made with @openart_ai...Vellum", time: "Mar 12", url: "https://www.instagram.com/p/DVyY41GDLNb/", likes: 3900, comments: 397, branded: true },
-      { text: "@<span class='mention'>openart_ai</span> — getting lost in the rhythm...Video created with @openart_ai", time: "Mar 18", url: "https://www.instagram.com/p/DWB2m35DDSZ/", likes: 3200, comments: 327 },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Ambassador for AI Personality of the Year 2026 @openart_ai × @fanvue", time: "Mar 23", url: "https://www.instagram.com/p/DWPQdJNjf8N/", likes: 2300, comments: 207, collab: true }
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Beautiful weekend, listen to my new song The F... Created using @openart_ai", time: "Feb 27", url: "https://www.instagram.com/p/DVQ9m9GDHkT/", likes: 8600, comments: 779, collab: true },
+      { text: "@<span class='mention'>openart_ai</span> — Sparkle, marble, and a little touch of magic. Created with @openart_ai", time: "Mar 5", url: "https://www.instagram.com/p/DVgKS98DMN5/", likes: 3300, comments: 323 },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Just a smile to start the weekend right. Created with @openart_ai", time: "Mar 6", url: "https://www.instagram.com/p/DVizPuXjGRy/", likes: 5200, comments: 476, collab: true },
+      { text: "@<span class='mention'>openart_ai</span> — Little sparkle. Made with @openart_ai. Now also features Vellum", time: "Mar 12", url: "https://www.instagram.com/p/DVyY41GDLNb/", likes: 4200, comments: 411, branded: true },
+      { text: "@<span class='mention'>openart_ai</span> — Getting lost in the rhythm of the run. Video created with @openart_ai", time: "Mar 18", url: "https://www.instagram.com/p/DWB2m35DDSZ/", likes: 3500, comments: 354 },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Ambassador for AI Personality of the Year 2026 @openart_ai × @fanvue", time: "Mar 23", url: "https://www.instagram.com/p/DWPQdJNjf8N/", likes: 2800, comments: 235, collab: true }
     ],
     otherPosts: []
   },
@@ -410,12 +409,11 @@ const influencers = [
     contract: { period: "6 months", deliverable: "20 posts (4 branded) + 10 PromptRage posts", cash: "$40,000", credits: "10K/d (1 Wonder + 200K)", affiliate: "—" },
     // CSV: Feb16=branded announce+suite, Feb23=non branding, Mar2=电影工作室, Mar9=branded vellum
     openartPosts: [
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Announcing partnership + Suite", time: "Feb 16", branded: true, collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Feb 23", url: "https://www.instagram.com/p/DVHC5I1j6g0/", likes: 9000, collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 2", url: "https://www.instagram.com/p/DVY9YoHDjfJ/", collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum", time: "Mar 13", url: "https://www.instagram.com/p/DV1RmmUDuOj/", likes: 4900, branded: true, collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 18", url: "https://www.instagram.com/p/DWCE5NtDvp-/", collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 25", url: "https://www.instagram.com/p/DWUEnQljtrW/", likes: 11100, collab: true }
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Now an @openart_ai ambassador. OpenArt Suite has all AI tools in one place", time: "Feb 23", url: "https://www.instagram.com/p/DVHC5I1j6g0/", likes: 10200, comments: 154, branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — POV: he started a podcast mid-party. Made in @openart_ai", time: "Mar 2", url: "https://www.instagram.com/p/DVY9YoHDjfJ/", likes: 23100, comments: 390, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — OpenArt's new Vellum tool saved the day. Enhanced skin texture", time: "Mar 13", url: "https://www.instagram.com/p/DV1RmmUDuOj/", likes: 6600, comments: 78, branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — She was more pressed than my olive oil. Made in @openart_ai", time: "Mar 18", url: "https://www.instagram.com/p/DWCE5NtDvp-/", likes: 30800, comments: 442, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Only thing I'm serving is a reality check. Made in @openart_ai", time: "Mar 25", url: "https://www.instagram.com/p/DWUEnQljtrW/", likes: 19400, comments: 370, collab: true }
     ],
     otherPosts: []
   },
@@ -439,12 +437,12 @@ const influencers = [
     startDate: "Feb 9",
     contract: { period: "6 months", deliverable: "4 posts/month (1 branded), Bio", cash: "$4,000", credits: "1 Wonder", affiliate: "30% rev sharing" },
     openartPosts: [
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Feb 19", url: "https://www.instagram.com/p/DU9B_pygqBt/", collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Kling motion sync", time: "Mar 2", url: "https://www.instagram.com/p/DVZMHdygk1s/", branded: true, collab: true },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum", time: "Mar 9", url: "https://www.instagram.com/p/DVrFvJXggyc/", branded: true, collab: true },
-      { text: "@<span class='mention'>openart_ai</span> mention", time: "Mar 11", url: "https://www.instagram.com/p/DVwMlBSgpg7/" },
-      { text: "@<span class='mention'>openart_ai</span> mention", time: "Mar 14", url: "https://www.instagram.com/p/DV4CPMkgiEk/" },
-      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 20", url: "https://www.instagram.com/p/DWIBbxRAqEy/", collab: true }
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Helicopter trend, simplified workflow", time: "Feb 19", url: "https://www.instagram.com/p/DU9B_pygqBt/", likes: 1100, comments: 2200, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Kling Motion turns raw footage into cinema", time: "Mar 2", url: "https://www.instagram.com/p/DVZMHdygk1s/", likes: 237, comments: 292, branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Kling 3.0 Motion Control just dropped", time: "Mar 9", url: "https://www.instagram.com/p/DVrFvJXggyc/", likes: 144, comments: 16, branded: true, collab: true },
+      { text: "@<span class='mention'>openart_ai</span> — Kling Motion Control transition", time: "Mar 11", url: "https://www.instagram.com/p/DVwMlBSgpg7/", likes: 473, comments: 96, branded: true },
+      { text: "@<span class='mention'>openart_ai</span> — Spring fresh energy, steal my prompt", time: "Mar 14", url: "https://www.instagram.com/p/DV4CPMkgiEk/", likes: 727, comments: 1300 },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — OpenArt 3D Worlds turns a prompt into an entire world", time: "Mar 20", url: "https://www.instagram.com/p/DWIBbxRAqEy/", likes: 283, comments: 412, branded: true, collab: true }
     ],
     otherPosts: []
   },
@@ -488,7 +486,7 @@ function dateToWeekIdx(timeStr) {
   const parts = timeStr.split(' ');
   const month = M[parts[0]]; const day = parseInt(parts[1]);
   // Week boundaries (start dates): Feb 9, Feb 16, Feb 23, Mar 2, Mar 9, Mar 16, Mar 23
-  const bounds = [[1,9],[1,16],[1,23],[2,2],[2,9],[2,16],[2,23]];
+  const bounds = [[1,9],[1,16],[1,23],[2,2],[2,9],[2,16],[2,23],[2,30],[3,6]];
   for (let i = bounds.length - 1; i >= 0; i--) {
     const [bm, bd] = bounds[i];
     if (month > bm || (month === bm && day >= bd)) return i;
@@ -497,32 +495,32 @@ function dateToWeekIdx(timeStr) {
 }
 
 function calcWeekly(inf) {
-  if (inf.status !== 'signed') return ['na','na','na','na','na','na','na'];
-  const w = ['na','na','na','na','na','na','na'];
+  if (inf.status !== 'signed') return WEEKS.map(()=>'na');
+  const w = WEEKS.map(()=>'na');
 
   // Determine start week index from startDate
   const startIdx = inf.startDate ? dateToWeekIdx(inf.startDate) : 0;
-  for (let i = Math.max(0, startIdx); i < 7; i++) w[i] = 'missed';
+  for (let i = Math.max(0, startIdx); i < WEEKS.length; i++) w[i] = 'missed';
 
   // Count posts per week
-  const postCount = [0,0,0,0,0,0,0];
-  const postType = ['','','','','','',''];
+  const postCount = WEEKS.map(()=>0);
+  const postType = WEEKS.map(()=>'');
 
   // Only collab posts count toward weekly compliance; @mentions don't
   inf.openartPosts.forEach(p => {
     if (!p.collab) return; // skip @mentions
     const idx = dateToWeekIdx(p.time);
-    if (idx >= 0 && idx < 7) { postCount[idx]++; postType[idx] = p.branded ? 'branded' : (postType[idx] === 'branded' ? 'branded' : 'posted'); }
+    if (idx >= 0 && idx < WEEKS.length) { postCount[idx]++; postType[idx] = p.branded ? 'branded' : (postType[idx] === 'branded' ? 'branded' : 'posted'); }
   });
 
   // First pass: mark weeks that have posts
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < WEEKS.length; i++) {
     if (postCount[i] > 0 && w[i] !== 'na') w[i] = postType[i] || 'posted';
   }
 
   // Second pass: redistribute excess posts to fill missed weeks (backfill)
   // If a week has >1 post, use excess to fill nearest missed weeks before it
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < WEEKS.length; i++) {
     if (postCount[i] > 1) {
       let excess = postCount[i] - 1;
       // Backfill: look backwards for missed weeks
@@ -823,6 +821,7 @@ function showAddPost(handle) {
             <button onclick="fetchPostMeta()" id="ap-fetch-btn" style="padding:8px 14px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Fetch</button>
           </div>
           <div id="ap-status" style="font-size:11px;color:var(--text2);display:none"></div>
+          <div id="ap-login-hint" style="font-size:10px;color:var(--orange);display:none">First time? Log into Instagram in the browser window that pops up, then try Fetch again.</div>
           <input id="ap-text" placeholder="Caption (auto-filled after fetch)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
           <div style="display:flex;gap:8px">
             <input id="ap-time" placeholder="Date" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
@@ -860,18 +859,24 @@ async function fetchPostMeta() {
     const res = await fetch('/api/fetch-post?url=' + encodeURIComponent(url));
     const data = await res.json();
 
-    if (data.ok) {
-      if (data.caption) document.getElementById('ap-text').value = data.caption.substring(0, 200);
+    if (data.ok && data.caption) {
+      document.getElementById('ap-text').value = data.caption.substring(0, 200);
       if (data.date) document.getElementById('ap-time').value = data.date;
-      if (data.likes) document.getElementById('ap-likes').value = data.likes;
+      if (data.likes > 1) document.getElementById('ap-likes').value = data.likes;
       if (data.comments) document.getElementById('ap-comments').value = data.comments;
-      document.getElementById('ap-oa').checked = data.mentionsOpenArt;
+      document.getElementById('ap-oa').checked = data.mentionsOpenArt || data.isCollab;
       document.getElementById('ap-branded').checked = data.branded;
-      document.getElementById('ap-type').textContent = data.type ? (data.type === 'collab' ? 'Collab w/ OpenArt' : '@mention OpenArt') : '';
-      status.textContent = '✓ Fetched' + (data.likes ? ` — ${fmt(data.likes)} likes` : '') + (data.date ? `, ${data.date}` : '');
+      document.getElementById('ap-type').textContent = data.type === 'collab' ? 'Collab w/ OpenArt' : data.type === '@mention' ? '@mention OpenArt' : '';
+      status.textContent = '✓ ' + (data.isCollab ? 'Collab' : '@mention') + (data.likes > 1 ? ` — ${fmt(data.likes)} likes` : '') + (data.date ? `, ${data.date}` : '') + (data.features?.length ? ` — ${data.features.join(', ')}` : '');
       status.style.color = 'var(--green)';
+      document.getElementById('ap-login-hint').style.display = 'none';
+    } else if (data.ok && !data.caption) {
+      // Browser opened but no data — likely not logged into IG
+      status.textContent = '⚠ Browser opened but got no data — need to log into Instagram first';
+      status.style.color = 'var(--orange)';
+      document.getElementById('ap-login-hint').style.display = 'block';
     } else {
-      status.textContent = '⚠ Could not fetch — Instagram may be blocking. Fill manually.';
+      status.textContent = '⚠ ' + (data.error || 'Fetching, browser is loading...');
       status.style.color = 'var(--orange)';
     }
   } catch(e) {
@@ -1025,35 +1030,78 @@ function applyScrapeData(data) {
 
 // ===== EXPORT CSV =====
 function exportCSV() {
-  const rows = [['Influencer','Handle','Followers','Status','Platform','Compliance','Total Collab Posts','Total @Mentions','Post URL','Post Date','Type','Branded','Likes','Comments','Views','Caption']];
-
-  influencers.forEach(inf => {
-    const comp = getCompliance(inf);
-    const compPct = comp.rate === null ? 'N/A' : Math.round(comp.rate * 100) + '%';
-    const collabCount = inf.openartPosts.filter(p => p.collab).length;
-    const mentionCount = inf.openartPosts.filter(p => !p.collab).length;
-
-    if (inf.openartPosts.length === 0) {
-      rows.push([inf.name, '@'+inf.handle, inf.followers, inf.status, inf.platform, compPct, collabCount, mentionCount, '', '', '', '', '', '', '', '']);
-    } else {
-      inf.openartPosts.forEach((p, i) => {
-        const caption = p.text.replace(/<[^>]*>/g, '').replace(/,/g, ';');
-        rows.push([
-          i === 0 ? inf.name : '', i === 0 ? '@'+inf.handle : '', i === 0 ? inf.followers : '', i === 0 ? inf.status : '', i === 0 ? inf.platform : '', i === 0 ? compPct : '',
-          i === 0 ? collabCount : '', i === 0 ? mentionCount : '',
-          p.url || '', p.time, p.collab ? 'Collab' : '@Mention', p.branded ? 'Yes' : 'No',
-          p.likes || '', p.comments || '', p.views || '', caption
-        ]);
-      });
-    }
-  });
-
-  // Summary row
+  const signed = influencers.filter(i => i.status === 'signed');
+  const totalReach = influencers.reduce((s,i) => s + i.followers, 0);
+  const totalPosts = influencers.reduce((s,i) => s + i.openartPosts.length, 0);
+  const totalCollabs = influencers.reduce((s,i) => s + i.openartPosts.filter(p => p.collab).length, 0);
+  const totalMentions = influencers.reduce((s,i) => s + i.openartPosts.filter(p => !p.collab).length, 0);
+  const totalBranded = influencers.reduce((s,i) => s + i.openartPosts.filter(p => p.branded).length, 0);
   const totalLikes = influencers.reduce((s,i) => s + i.openartPosts.reduce((ss,p) => ss + (p.likes||0), 0), 0);
   const totalComments = influencers.reduce((s,i) => s + i.openartPosts.reduce((ss,p) => ss + (p.comments||0), 0), 0);
   const totalViews = influencers.reduce((s,i) => s + i.openartPosts.reduce((ss,p) => ss + (p.views||0), 0), 0);
+  const totalW = signed.reduce((s,i) => s + i.weekly.filter(w=>w!=='na').length, 0);
+  const postedW = signed.reduce((s,i) => s + i.weekly.filter(w=>w==='posted'||w==='branded').length, 0);
+  const compRate = totalW > 0 ? Math.round(postedW / totalW * 100) : 0;
+
+  const rows = [];
+
+  // Overview section
+  rows.push(['=== OVERVIEW ===']);
+  rows.push(['Report Date', new Date().toISOString().slice(0,10)]);
+  rows.push(['Total Partners', influencers.length]);
+  rows.push(['Active (Signed)', signed.length]);
+  rows.push(['Pending', influencers.filter(i => i.status === 'pending').length]);
+  rows.push(['Total Reach (Followers)', totalReach]);
+  rows.push(['Total @OpenArt Posts', totalPosts]);
+  rows.push(['Collab Posts', totalCollabs]);
+  rows.push(['@Mention Posts', totalMentions]);
+  rows.push(['Branded Posts (feature promo)', totalBranded]);
+  rows.push(['Total Likes', totalLikes]);
+  rows.push(['Total Comments', totalComments]);
+  rows.push(['Total Views', totalViews]);
+  rows.push(['Compliance Rate', compRate + '%']);
+  rows.push(['Weeks Delivered', postedW + '/' + totalW]);
+  rows.push(['Weeks Missed', (totalW - postedW) + '/' + totalW]);
   rows.push([]);
-  rows.push(['TOTAL','','','','','','','','','','','', totalLikes, totalComments, totalViews, '']);
+
+  // Per-partner summary
+  rows.push(['=== PARTNER SUMMARY ===']);
+  rows.push(['Influencer','Handle','Followers','Status','Creator','Collab Posts','@Mentions','Branded','Compliance','Contract Period','Deliverable','Cash']);
+  influencers.forEach(inf => {
+    const comp = getCompliance(inf);
+    const compPct = comp.rate === null ? 'N/A' : Math.round(comp.rate * 100) + '%';
+    rows.push([
+      inf.name, '@'+inf.handle, inf.followers, inf.status, inf.creator,
+      inf.openartPosts.filter(p => p.collab).length,
+      inf.openartPosts.filter(p => !p.collab).length,
+      inf.openartPosts.filter(p => p.branded).length,
+      compPct,
+      inf.contract.period, (inf.contract.deliverable||'').replace(/,/g,';'), (inf.contract.cash||'').replace(/,/g,';')
+    ]);
+  });
+  rows.push([]);
+
+  // Weekly compliance grid
+  rows.push(['=== WEEKLY COMPLIANCE ===']);
+  rows.push(['Influencer', ...WEEKS]);
+  influencers.forEach(inf => {
+    rows.push([inf.name, ...inf.weekly.map(w => w === 'branded' ? 'Branded' : w === 'posted' ? 'Posted' : w === 'missed' ? 'MISSED' : 'N/A')]);
+  });
+  rows.push([]);
+
+  // All posts detail
+  rows.push(['=== POST DETAILS ===']);
+  rows.push(['Influencer','Handle','Post URL','Date','Type','Branded','Likes','Comments','Views','Caption']);
+  influencers.forEach(inf => {
+    inf.openartPosts.forEach(p => {
+      const caption = p.text.replace(/<[^>]*>/g, '').replace(/,/g, ';');
+      rows.push([
+        inf.name, '@'+inf.handle, p.url || '', p.time,
+        p.collab ? 'Collab' : '@Mention', p.branded ? 'Yes' : 'No',
+        p.likes || '', p.comments || '', p.views || '', caption
+      ]);
+    });
+  });
 
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
