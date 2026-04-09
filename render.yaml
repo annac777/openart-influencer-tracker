@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: openart-influencer-tracker
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3456
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

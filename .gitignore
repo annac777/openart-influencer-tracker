@@ -1,0 +1,10 @@
+node_modules/
+server.log
+*.DS_Store
+screenshots/
+scrape-data.json
+snapshots.json
+posts.json
+scrape.js
+screenshot.js
+screenshots/

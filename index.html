@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenArt Influencer Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #ffffff; --surface: #f8f9fa; --surface2: #f0f1f3;
+      --border: #e2e5e9; --text: #1a1a1a; --text2: #6b7280;
+      --accent: #7c3aed; --accent2: #6d28d9;
+      --green: #16a34a; --red: #dc2626; --orange: #d97706;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+    .header {
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px;
+    }
+    .header h1 { font-size: 16px; font-weight: 700; }
+    .header h1 span { color: var(--accent2); }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: var(--green);
+    }
+    .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .scrape-btns { display: flex; gap: 6px; }
+    .scrape-btn {
+      padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      background: var(--surface); color: var(--text); transition: all .15s;
+      display: flex; align-items: center; gap: 5px; font-family: inherit;
+    }
+    .scrape-btn:hover { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+    .scrape-btn.deep { background: #f3f0ff; border-color: #c4b5fd; color: var(--accent2); }
+    .scrape-btn.deep:hover { background: #ede9fe; }
+    .scrape-btn.single { background: #f0fdf4; border-color: #86efac; color: var(--green); }
+    .scrape-btn.single:hover { background: #dcfce7; }
+    .scrape-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .scrape-btn .scrape-icon { font-size: 12px; }
+    .scrape-btn.running { animation: pulse 1s infinite; }
+
+    .scrape-toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      background: var(--text); color: white; padding: 12px 20px;
+      border-radius: 12px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0,0,0,.15);
+      display: none; align-items: center; gap: 10px;
+      max-width: 400px;
+    }
+    .scrape-toast.show { display: flex; }
+    .scrape-toast .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+      border-top-color: white; border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat { padding: 14px 20px; border-right: 1px solid var(--border); text-align: center; }
+    .stat:last-child { border-right: none; }
+    .stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+    .stat-val.purple { color: var(--accent2); }
+    .stat-val.red { color: var(--red); }
+    .stat-sub { font-size: 10px; color: var(--text2); margin-top: 1px; }
+
+    /* All-Time Impact section */
+    .impact-bar {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      border-bottom: 1px solid var(--border); background: var(--surface);
+    }
+    .impact-stat { padding: 10px 16px; text-align: center; border-right: 1px solid var(--border); }
+    .impact-stat:last-child { border-right: none; }
+    .impact-label { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+    .impact-val { font-size: 16px; font-weight: 800; color: var(--accent2); margin-top: 1px; }
+    .impact-delta { font-size: 9px; color: var(--green); font-weight: 600; }
+    .impact-delta.neg { color: var(--red); }
+
+    /* Growth badge on post cards */
+    .growth-badge {
+      display: inline-flex; align-items: center; gap: 2px;
+      font-size: 9px; font-weight: 700; padding: 1px 5px;
+      border-radius: 4px; margin-left: 6px;
+    }
+    .growth-badge.up { background: rgba(34,197,94,.12); color: var(--green); }
+    .growth-badge.down { background: rgba(239,68,68,.12); color: var(--red); }
+
+    .layout { display: flex; height: calc(100vh - 110px); }
+
+    .sidebar {
+      width: 260px; min-width: 260px; border-right: 1px solid var(--border);
+      overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-title {
+      padding: 14px 16px 10px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px; color: var(--text2);
+    }
+    .inf-item {
+      padding: 10px 14px; cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .inf-item:hover { background: var(--surface); }
+    .inf-item.active { background: var(--surface2); border-left: 3px solid var(--accent); }
+    .inf-avatar {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .inf-info { flex: 1; min-width: 0; }
+    .inf-name { font-size: 13px; font-weight: 600; }
+    .inf-meta { font-size: 11px; color: var(--text2); margin-top: 2px; display: flex; gap: 6px; align-items: center; }
+    .inf-badge {
+      padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase;
+    }
+    .inf-badge.signed { background: rgba(34,197,94,.15); color: var(--green); }
+    .inf-badge.pending { background: rgba(245,158,11,.15); color: var(--orange); }
+    .inf-compliance {
+      font-size: 10px; font-weight: 700; margin-left: auto; flex-shrink: 0;
+      padding: 2px 8px; border-radius: 8px;
+    }
+    .inf-compliance.good { background: rgba(34,197,94,.15); color: var(--green); }
+    .inf-compliance.bad { background: rgba(239,68,68,.15); color: var(--red); }
+    .inf-compliance.na { background: rgba(113,113,122,.15); color: var(--text2); }
+
+    .main-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* Detail header + weekly compliance always visible */
+    .detail-top {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+    }
+    .detail-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+    }
+    .detail-avatar {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 800;
+    }
+    .detail-name { font-size: 18px; font-weight: 800; }
+    .detail-handle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .detail-tags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+    .detail-tag {
+      padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 600;
+      background: var(--surface2); color: var(--text2);
+    }
+    .detail-tag.type { background: rgba(124,58,237,.15); color: var(--accent2); }
+    .detail-right-stats { display: flex; gap: 16px; margin-left: auto; }
+    .detail-stat { text-align: center; }
+    .detail-stat-val { font-size: 16px; font-weight: 800; }
+    .detail-stat-label { font-size: 9px; color: var(--text2); text-transform: uppercase; }
+
+    /* Weekly grid — always visible under header */
+    .weekly-section {}
+    .weekly-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--text2); margin-bottom: 8px;
+    }
+    .week-grid {
+      display: flex; gap: 6px;
+    }
+    .wk {
+      flex: 1; border-radius: 6px; padding: 6px 4px; text-align: center;
+      background: var(--surface); border: 1px solid var(--border);
+      min-width: 0;
+    }
+    .wk-date { font-size: 9px; color: var(--text2); margin-bottom: 3px; white-space: nowrap; }
+    .wk-icon { font-size: 14px; }
+    .wk-label { font-size: 8px; margin-top: 2px; font-weight: 700; }
+    .wk.posted { background: rgba(34,197,94,.06); border-color: rgba(34,197,94,.25); }
+    .wk.posted .wk-label { color: var(--green); }
+    .wk.branded { background: rgba(124,58,237,.06); border-color: rgba(124,58,237,.25); }
+    .wk.branded .wk-label { color: var(--accent2); }
+    .wk.missed { background: rgba(239,68,68,.05); border-color: rgba(239,68,68,.15); }
+    .wk.missed .wk-label { color: var(--red); }
+    .wk.na { opacity: .3; }
+
+    .compliance-bar {
+      margin-top: 8px; display: flex; align-items: center; gap: 10px;
+    }
+    .comp-fill-track {
+      flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden;
+    }
+    .comp-fill {
+      height: 100%; border-radius: 2px; transition: width .3s;
+    }
+    .comp-text { font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px;
+    }
+    .tab {
+      padding: 10px 14px; font-size: 12px; font-weight: 600;
+      color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all .1s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-color: var(--accent); }
+
+    .tab-content { flex: 1; overflow-y: auto; }
+    .tab-panel { display: none; padding: 20px 28px; }
+    .tab-panel.active { display: block; }
+
+    /* Post cards */
+    .post-list { display: flex; flex-direction: column; gap: 10px; }
+    .post-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .post-card.oa { border-color: rgba(124,58,237,.35); }
+    .pc-header {
+      padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pc-av {
+      width: 22px; height: 22px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+    }
+    .pc-name { font-size: 12px; font-weight: 600; }
+    .pc-time { font-size: 10px; color: var(--text2); margin-left: auto; }
+    .pc-oa-tag {
+      font-size: 9px; font-weight: 700; color: var(--accent2);
+      background: rgba(124,58,237,.15); padding: 2px 6px; border-radius: 4px;
+    }
+    .pc-body { padding: 10px 12px; font-size: 12px; line-height: 1.6; }
+    .pc-body .mention { color: var(--accent2); font-weight: 600; }
+    .pc-metrics {
+      padding: 6px 12px; border-top: 1px solid var(--border);
+      display: flex; gap: 14px; font-size: 11px; color: var(--text2);
+    }
+    .pc-m { display: flex; align-items: center; gap: 3px; }
+    .pc-m svg { width: 12px; height: 12px; }
+    .pc-m.hot { color: var(--green); font-weight: 600; }
+
+    /* Contract grid */
+    .cg-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .cg-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
+    }
+    .cg-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .cg-val { font-size: 13px; font-weight: 700; }
+    .cg-val.sm { font-size: 12px; font-weight: 600; line-height: 1.5; }
+
+    .section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--text2); margin-bottom: 10px;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+
+    .ig-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+      color: white; padding: 5px 12px; border-radius: 7px;
+      text-decoration: none; font-size: 11px; font-weight: 700;
+    }
+    .logo { color: white; }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; color: var(--text2); gap: 12px; padding: 60px;
+    }
+    .empty-state svg { width: 48px; height: 48px; opacity: .3; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">O</div>
+    <h1>OpenArt <span>Influencer Tracker</span></h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="scrape-btns">
+      <button class="scrape-btn" onclick="takeSnapshot()" title="Save current metrics snapshot" style="background:#f0fdf4;border-color:#86efac;color:#16a34a">
+        <span class="scrape-icon">📸</span> Snapshot
+      </button>
+      <button class="scrape-btn" onclick="exportCSV()" title="Export report as CSV">
+        <span class="scrape-icon">📊</span> Export
+      </button>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+<div class="impact-bar" id="impactBar"></div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-title">Partners</div>
+    <div id="infList"></div>
+  </div>
+  <div class="main-content" id="mainContent">
+    <div class="empty-state" id="emptyState">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 19l-7-7 7-7"/></svg>
+      <p>Select an influencer to view details</p>
+    </div>
+    <div id="detailView" style="display:none;flex-direction:column;height:100%;">
+      <div class="detail-top" id="detailTop"></div>
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="openart" onclick="switchTab('openart')">@OpenArt Posts</div>
+      </div>
+      <div class="tab-content">
+        <div class="tab-panel active" id="panel-openart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEEKS = ['Feb 9','Feb 16','Feb 23','Mar 2','Mar 9','Mar 16','Mar 23'];
+
+const influencers = [
+  {
+    name: "Shudu", handle: "shudu.gram", platform: "Instagram",
+    followers: 239000, type: "Model", status: "signed",
+    creator: "Cameron", color: "#e74c3c",
+    igUrl: "https://www.instagram.com/shudu.gram/",
+    startDate: "Feb 23",
+    contract: { period: "—", deliverable: "Branded Posts", cash: "—", credits: "—", affiliate: "—" },
+    openartPosts: [
+      { text: "@<span class='mention'>openart_ai</span> — Vellum skincare for AI models", time: "Mar 14", likes: 297, comments: 35, views: 15000, url: "https://www.instagram.com/p/DV4IPyDCHRy/", branded: true },
+      { text: "@<span class='mention'>openart_ai</span> — Vellum on @openart_ai is doing its job too well 👀", time: "Mar 16", likes: 990, comments: 65, views: 42000, url: "https://www.instagram.com/p/DV9MyM8iEAN/", branded: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — THE LOST WORLD", time: "Mar 18", likes: 361, comments: 28, views: 18000, url: "https://www.instagram.com/p/DWCRFhFiOjd/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 20", likes: 151, comments: 12, views: 8000, url: "https://www.instagram.com/p/DWHN1-VCOCZ/", collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "Aitana", handle: "fit_aitana", platform: "Instagram",
+    followers: 393000, type: "Influencer", status: "signed",
+    creator: "Diana / The Clueless Aigency", color: "#e84393",
+    igUrl: "https://www.instagram.com/fit_aitana/",
+    startDate: "Feb 9",
+    contract: { period: "6 months", deliverable: "1 post/week, Bio: @OpenArt Ambassador", cash: "$60,000", credits: "2 acc, Infinite + 20K/d", affiliate: "40% rev sharing" },
+    openartPosts: [
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — How could I say no to @openart_ai it's a brand I love 💕", time: "Feb 24", url: "https://www.instagram.com/p/DVJgNLoCCTs/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum skincare finally available for all you Mortales", time: "Mar 10", url: "https://www.instagram.com/p/DVtj1mGiPSF/", branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — not telling you everything...but monday. Clear your schedule", time: "Mar 20", url: "https://www.instagram.com/p/DWHSUYYCG7r/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — AI Personality of the Year Ambassadors 2026", time: "Mar 26", url: "https://www.instagram.com/p/DWW8Y-hiLGp/", collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "The Monster Library", handle: "the.monster.library", platform: "Instagram",
+    followers: 805000, type: "Animated Character", status: "signed",
+    creator: "Kevin & Mark", color: "#6c5ce7",
+    igUrl: "https://www.instagram.com/the.monster.library/",
+    startDate: "Feb 9",
+    contract: { period: "6 months", deliverable: "1 post/week + 3 extra, Bio link", cash: "$24,000", credits: "$5K/mo (2 acc, Wonder + 850K)", affiliate: "30% rev sharing" },
+    // CSV: Feb9=branded, then all "non branding post" through Mar23
+    openartPosts: [
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Valentine's Day partnership announcement 💖", time: "Feb 9", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Monster Library and @openart_ai are now officially friends", time: "Feb 13", url: "https://www.instagram.com/p/DUtqjLBiakq/", likes: 4800, comments: 362, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — The world may not see the real you, but I know your heart", time: "Feb 19", url: "https://www.instagram.com/p/DU7wwA6AC7O/", likes: 67400, comments: 2500, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Give your love freely but protect your heart", time: "Feb 25", url: "https://www.instagram.com/p/DVMkG2iCR4g/", likes: 5400, comments: 510, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Your love is everything to me", time: "Mar 7", url: "https://www.instagram.com/p/DVk3WU-NS9F/", likes: 12200, comments: 688, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 14", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Every day with you feels like a beautiful dream", time: "Mar 19", url: "https://www.instagram.com/p/DWE7YnWCXIV/", likes: 4391, comments: 120, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 26", url: "https://www.instagram.com/p/DWVMA3LjTJD/", likes: 3200, comments: 95, collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "Milla Sofia", handle: "millasofiafin", platform: "Instagram",
+    followers: 529000, type: "Singer", status: "signed",
+    creator: "Jouni", color: "#00cec9",
+    igUrl: "https://www.instagram.com/millasofiafin/",
+    startDate: "Feb 16",
+    contract: { period: "4 months", deliverable: "1 post/week + MV with OA watermark, Bio", cash: "$5,000", credits: "Infinite Plan", affiliate: "1 full MV" },
+    openartPosts: [
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — beautiful weekend...This video was created using @openart_ai", time: "Feb 27", url: "https://www.instagram.com/p/DVQ9m9GDHkT/", likes: 8400, comments: 741, collab: true },
+      { text: "@<span class='mention'>openart_ai</span> — Sparkle, marble...Created with @openart_ai", time: "Mar 5", url: "https://www.instagram.com/p/DVgKS98DMN5/", likes: 3200, comments: 315 },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Just a smile to start the weekend right. Created with @openart_ai", time: "Mar 6", url: "https://www.instagram.com/p/DVizPuXjGRy/", likes: 4900, comments: 430, collab: true },
+      { text: "@<span class='mention'>openart_ai</span> — Little sparkle...Made with @openart_ai...Vellum", time: "Mar 12", url: "https://www.instagram.com/p/DVyY41GDLNb/", likes: 3900, comments: 397, branded: true },
+      { text: "@<span class='mention'>openart_ai</span> — getting lost in the rhythm...Video created with @openart_ai", time: "Mar 18", url: "https://www.instagram.com/p/DWB2m35DDSZ/", likes: 3200, comments: 327 },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Ambassador for AI Personality of the Year 2026 @openart_ai × @fanvue", time: "Mar 23", url: "https://www.instagram.com/p/DWPQdJNjf8N/", likes: 2300, comments: 207, collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "DollyDoesVlogs", handle: "dollydoesvlogs", platform: "Instagram",
+    followers: 377000, type: "Comedian", status: "signed",
+    creator: "Muzzammil Khan", color: "#fdcb6e",
+    igUrl: "https://www.instagram.com/dollydoesvlogs/",
+    startDate: "Feb 9",
+    contract: { period: "6 months", deliverable: "20 posts (4 branded) + 10 PromptRage posts", cash: "$40,000", credits: "10K/d (1 Wonder + 200K)", affiliate: "—" },
+    // CSV: Feb16=branded announce+suite, Feb23=non branding, Mar2=电影工作室, Mar9=branded vellum
+    openartPosts: [
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Announcing partnership + Suite", time: "Feb 16", branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Feb 23", url: "https://www.instagram.com/p/DVHC5I1j6g0/", likes: 9000, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 2", url: "https://www.instagram.com/p/DVY9YoHDjfJ/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum", time: "Mar 13", url: "https://www.instagram.com/p/DV1RmmUDuOj/", likes: 4900, branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 18", url: "https://www.instagram.com/p/DWCE5NtDvp-/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 25", url: "https://www.instagram.com/p/DWUEnQljtrW/", likes: 11100, collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "Leya Love", handle: "leyalovenature", platform: "Instagram",
+    followers: 509000, type: "Eco Ambassador", status: "signed",
+    creator: "Annika & Barbara / CosmiQ Universe", color: "#55efc4",
+    igUrl: "https://www.instagram.com/leyalovenature/",
+    startDate: "Mar 23",
+    contract: { period: "TBD", deliverable: "TBD", cash: "—", credits: "—", affiliate: "—" },
+    openartPosts: [
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> + @fanvue — announcement", time: "Mar 27", url: "https://www.instagram.com/p/DWZTkKDlKeu/", collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "Mia Maldini", handle: "mia.maldinii", platform: "Instagram",
+    followers: 13000, type: "Influencer", status: "signed",
+    creator: "Danijel & Lisa", color: "#fd79a8",
+    igUrl: "https://www.instagram.com/mia.maldinii/",
+    startDate: "Feb 9",
+    contract: { period: "6 months", deliverable: "4 posts/month (1 branded), Bio", cash: "$4,000", credits: "1 Wonder", affiliate: "30% rev sharing" },
+    openartPosts: [
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Feb 19", url: "https://www.instagram.com/p/DU9B_pygqBt/", collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Kling motion sync", time: "Mar 2", url: "https://www.instagram.com/p/DVZMHdygk1s/", branded: true, collab: true },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span> — Vellum", time: "Mar 9", url: "https://www.instagram.com/p/DVrFvJXggyc/", branded: true, collab: true },
+      { text: "@<span class='mention'>openart_ai</span> mention", time: "Mar 11", url: "https://www.instagram.com/p/DVwMlBSgpg7/" },
+      { text: "@<span class='mention'>openart_ai</span> mention", time: "Mar 14", url: "https://www.instagram.com/p/DV4CPMkgiEk/" },
+      { text: "Collab w/ <span class='mention'>@openart_ai</span>", time: "Mar 20", url: "https://www.instagram.com/p/DWIBbxRAqEy/", collab: true }
+    ],
+    otherPosts: []
+  },
+  {
+    name: "Baddies in AI", handle: "baddiesinai", platform: "Instagram",
+    followers: 319000, type: "Community", status: "pending",
+    creator: "—", color: "#a29bfe",
+    igUrl: "https://www.instagram.com/baddiesinai/",
+    fbUrl: "https://www.facebook.com/groups/baddiesinai/",
+    startDate: "Feb 9",
+    contract: { period: "TBD", deliverable: "TBD", cash: "—", credits: "—", affiliate: "—" },
+    openartPosts: [],
+    otherPosts: []
+  },
+  {
+    name: "Russo AI", handle: "russo.ai", platform: "Instagram",
+    followers: 32200, type: "AI Creator", status: "pending",
+    creator: "—", color: "#e17055",
+    igUrl: "https://www.instagram.com/russo.ai/",
+    startDate: "",
+    contract: { period: "TBD", deliverable: "TBD", cash: "—", credits: "—", affiliate: "—" },
+    openartPosts: [],
+    otherPosts: []
+  },
+  {
+    name: "Eysan Aksoy", handle: "eysanaksoytr", platform: "Instagram",
+    followers: 145000, type: "AI Influencer", status: "pending",
+    creator: "—", color: "#00b894",
+    igUrl: "https://www.instagram.com/eysanaksoytr/",
+    startDate: "",
+    contract: { period: "TBD", deliverable: "TBD", cash: "—", credits: "—", affiliate: "—" },
+    openartPosts: [],
+    otherPosts: []
+  }
+];
+
+// ===== AUTO-CALCULATE WEEKLY FROM POSTS =====
+// Map a post date like "Mar 14" to the week column it belongs to
+function dateToWeekIdx(timeStr) {
+  const M = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5};
+  const parts = timeStr.split(' ');
+  const month = M[parts[0]]; const day = parseInt(parts[1]);
+  // Week boundaries (start dates): Feb 9, Feb 16, Feb 23, Mar 2, Mar 9, Mar 16, Mar 23
+  const bounds = [[1,9],[1,16],[1,23],[2,2],[2,9],[2,16],[2,23]];
+  for (let i = bounds.length - 1; i >= 0; i--) {
+    const [bm, bd] = bounds[i];
+    if (month > bm || (month === bm && day >= bd)) return i;
+  }
+  return -1; // before tracking period
+}
+
+function calcWeekly(inf) {
+  if (inf.status !== 'signed') return ['na','na','na','na','na','na','na'];
+  const w = ['na','na','na','na','na','na','na'];
+
+  // Determine start week index from startDate
+  const startIdx = inf.startDate ? dateToWeekIdx(inf.startDate) : 0;
+  for (let i = Math.max(0, startIdx); i < 7; i++) w[i] = 'missed';
+
+  // Count posts per week
+  const postCount = [0,0,0,0,0,0,0];
+  const postType = ['','','','','','',''];
+
+  // Only collab posts count toward weekly compliance; @mentions don't
+  inf.openartPosts.forEach(p => {
+    if (!p.collab) return; // skip @mentions
+    const idx = dateToWeekIdx(p.time);
+    if (idx >= 0 && idx < 7) { postCount[idx]++; postType[idx] = p.branded ? 'branded' : (postType[idx] === 'branded' ? 'branded' : 'posted'); }
+  });
+
+  // First pass: mark weeks that have posts
+  for (let i = 0; i < 7; i++) {
+    if (postCount[i] > 0 && w[i] !== 'na') w[i] = postType[i] || 'posted';
+  }
+
+  // Second pass: redistribute excess posts to fill missed weeks (backfill)
+  // If a week has >1 post, use excess to fill nearest missed weeks before it
+  for (let i = 0; i < 7; i++) {
+    if (postCount[i] > 1) {
+      let excess = postCount[i] - 1;
+      // Backfill: look backwards for missed weeks
+      for (let j = i - 1; j >= 0 && excess > 0; j--) {
+        if (w[j] === 'missed') {
+          w[j] = postType[i] || 'branded';
+          excess--;
+        }
+      }
+      // Forward fill if still excess
+      for (let j = i + 1; j < 7 && excess > 0; j++) {
+        if (w[j] === 'missed') {
+          w[j] = postType[i] || 'branded';
+          excess--;
+        }
+      }
+    }
+  }
+
+  return w;
+}
+
+// Apply auto-calculation to all influencers
+influencers.forEach(inf => { inf.weekly = calcWeekly(inf); });
+
+// ===== HELPERS =====
+function fmt(n) {
+  if (n === undefined || n === null || isNaN(n) || n === 0) return '—';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(n>=1e4?0:1)+'K';
+  return n;
+}
+
+function getCompliance(inf) {
+  if (inf.status !== 'signed') return { rate: null, posted: 0, total: 0, missed: 0 };
+  const active = inf.weekly.filter(w => w !== 'na');
+  const posted = active.filter(w => w === 'posted' || w === 'branded').length;
+  return { rate: active.length > 0 ? posted / active.length : 0, posted, total: active.length, missed: active.length - posted };
+}
+
+// ===== SNAPSHOT DATA =====
+let lastSnapshot = null;
+let prevSnapshot = null;
+
+async function loadSnapshots() {
+  try {
+    const res = await fetch('/api/snapshots');
+    const data = await res.json();
+    if (data.snapshots && data.snapshots.length > 0) {
+      lastSnapshot = data.snapshots[data.snapshots.length - 1];
+      if (data.snapshots.length > 1) prevSnapshot = data.snapshots[data.snapshots.length - 2];
+    }
+  } catch(_) {}
+}
+
+function getGrowth(url) {
+  if (!lastSnapshot || !prevSnapshot) return null;
+  const curr = lastSnapshot.metrics[url];
+  const prev = prevSnapshot.metrics[url];
+  if (!curr || !prev) return null;
+  return {
+    likes: curr.likes - prev.likes,
+    comments: curr.comments - prev.comments,
+    views: curr.views - prev.views
+  };
+}
+
+async function takeSnapshot() {
+  const posts = [];
+  influencers.forEach(inf => {
+    inf.openartPosts.forEach(p => {
+      posts.push({ handle: inf.handle, url: p.url || `${inf.handle}:${p.time}`, time: p.time, likes: p.likes || 0, comments: p.comments || 0, views: p.views || 0 });
+    });
+  });
+  try {
+    await fetch('/api/snapshots', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ posts }) });
+    await loadSnapshots();
+    showToast('📸 Snapshot saved — ' + posts.length + ' posts recorded');
+  } catch(e) { showToast('❌ Snapshot failed'); }
+}
+
+// ===== RENDER STATS BAR =====
+function renderStats() {
+  const tf = influencers.reduce((s,i)=>s+i.followers,0);
+  const signed = influencers.filter(i=>i.status==='signed');
+  const totalW = signed.reduce((s,i) => s + i.weekly.filter(w=>w!=='na').length, 0);
+  const postedW = signed.reduce((s,i) => s + i.weekly.filter(w=>w==='posted'||w==='branded').length, 0);
+  const missedW = totalW - postedW;
+  const rate = totalW > 0 ? Math.round(postedW / totalW * 100) : 0;
+  const oaM = influencers.reduce((s,i)=>s+i.openartPosts.length,0);
+  const posting = signed.filter(i=>i.openartPosts.length>0).length;
+
+  document.getElementById('statsBar').innerHTML = [
+    ['Total Reach', fmt(tf), ''],
+    ['Posting', posting+'/'+signed.length, posting<signed.length?'red':''],
+    ['@OpenArt Posts', oaM, 'purple'],
+    ['Compliance', rate+'%', rate<70?'red':''],
+    ['Active Partners', signed.length+'/'+influencers.length, ''],
+  ].map(([l,v,c])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val ${c}">${v}</div></div>`).join('');
+
+  // All-time impact
+  let totalLikes = 0, totalComments = 0, totalViews = 0, totalPosts = 0;
+  influencers.forEach(inf => {
+    inf.openartPosts.forEach(p => {
+      totalLikes += (p.likes || 0);
+      totalComments += (p.comments || 0);
+      totalViews += (p.views || 0);
+      totalPosts++;
+    });
+  });
+
+  document.getElementById('impactBar').innerHTML = [
+    ['Total Views', fmt(totalViews)],
+    ['Total Likes', fmt(totalLikes)],
+    ['Total Comments', fmt(totalComments)],
+    ['Total Posts', totalPosts],
+    ['Weeks Missed', missedW + '/' + totalW],
+  ].map(([l,v])=>`<div class="impact-stat"><div class="impact-label">${l}</div><div class="impact-val">${v}</div></div>`).join('');
+}
+
+// ===== RENDER SIDEBAR =====
+function renderList() {
+  document.getElementById('infList').innerHTML = influencers.map((inf,i) => {
+    const c = getCompliance(inf);
+    const label = c.rate === null ? 'N/A' : Math.round(c.rate*100)+'%';
+    const cls = c.rate === null ? 'na' : c.rate >= 0.7 ? 'good' : 'bad';
+    return `
+    <div class="inf-item" data-idx="${i}" onclick="selectInf(${i})">
+      <div class="inf-avatar" style="background:${inf.color}20;color:${inf.color}">${inf.name[0]}</div>
+      <div class="inf-info">
+        <div class="inf-name">${inf.name}</div>
+        <div class="inf-meta">
+          <span>${fmt(inf.followers)}</span>
+          <span class="inf-badge ${inf.status}">${inf.status}</span>
+        </div>
+      </div>
+      <div class="inf-compliance ${cls}">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== SELECT INFLUENCER =====
+let currentInf = -1;
+function selectInf(idx) {
+  currentInf = idx;
+  const inf = influencers[idx];
+  const comp = getCompliance(inf);
+  const compPct = comp.rate === null ? 0 : Math.round(comp.rate * 100);
+  const compColor = comp.rate === null ? 'var(--text2)' : comp.rate >= 0.7 ? 'var(--green)' : 'var(--red)';
+
+  document.querySelectorAll('.inf-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.inf-item[data-idx="${idx}"]`).classList.add('active');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('detailView').style.display = 'flex';
+
+  // Weekly grid HTML
+  const weekHtml = WEEKS.map((w,i) => {
+    const s = inf.weekly[i];
+    const icon = s==='branded'?'★':s==='posted'?'✓':s==='missed'?'✗':'—';
+    const label = s==='branded'?'Branded':s==='posted'?'Posted':s==='missed'?'MISSED':'N/A';
+    return `<div class="wk ${s}"><div class="wk-date">${w}</div><div class="wk-icon">${icon}</div><div class="wk-label">${label}</div></div>`;
+  }).join('');
+
+  // Detail top = header + weekly compliance (always visible)
+  document.getElementById('detailTop').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar" style="background:${inf.color}20;color:${inf.color}">${inf.name[0]}</div>
+      <div>
+        <div class="detail-name">${inf.name}</div>
+        <div class="detail-handle">@${inf.handle} · ${inf.platform}
+          <a href="${inf.igUrl}" target="_blank" class="ig-link" style="margin-left:8px;padding:3px 8px;font-size:10px">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            IG
+          </a>
+        </div>
+        <div class="detail-tags">
+          <span class="detail-tag type">${inf.type}</span>
+          <span class="detail-tag">${inf.creator}</span>
+        </div>
+      </div>
+      <div class="detail-right-stats">
+        <div class="detail-stat"><div class="detail-stat-val">${fmt(inf.followers)}</div><div class="detail-stat-label">Followers</div></div>
+        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--accent2)">${inf.openartPosts.length}</div><div class="detail-stat-label">@OA Posts</div></div>
+        <div class="detail-stat"><div class="detail-stat-val" style="color:${compColor}">${comp.rate===null?'N/A':compPct+'%'}</div><div class="detail-stat-label">Compliance</div></div>
+      </div>
+    </div>
+    <div class="weekly-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="weekly-title" style="margin-bottom:0">Weekly Posting — ${comp.rate!==null ? comp.posted+'/'+comp.total+' delivered' : 'Not active'}</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+          Start: <input type="text" value="${inf.startDate||'Feb 9'}" onchange="updateStartDate(${idx},this.value)" style="width:65px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:center">
+        </div>
+      </div>
+      <div class="week-grid">${weekHtml}</div>
+      ${comp.rate !== null ? `
+      <div class="compliance-bar">
+        <div class="comp-fill-track"><div class="comp-fill" style="width:${compPct}%;background:${compColor}"></div></div>
+        <div class="comp-text" style="color:${compColor}">${comp.missed > 0 ? comp.missed+' missed' : 'All delivered ✓'}</div>
+      </div>` : ''}
+    </div>
+  `;
+
+  // All Posts tab
+  // OpenArt tab
+  document.getElementById('panel-openart').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:0;border:none;padding-bottom:0">@OpenArt Posts (${inf.openartPosts.length})</div>
+      <button onclick="showAddPost('${inf.handle}')" style="padding:5px 12px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">+ Add Post</button>
+    </div>
+    ${inf.openartPosts.length === 0 ? '<div style="color:var(--text2);font-size:13px;padding:20px">No @OpenArt posts tracked yet</div>' : ''}
+    <div class="post-list">${inf.openartPosts.map(p => postCard(inf, {...p, isOA:true})).join('')}</div>
+  `;
+
+  switchTab('openart');
+}
+
+function postCard(inf, p) {
+  const isOA = p.isOA || p.text.includes('@OpenArt') || p.text.includes('@openart');
+  const url = p.url || inf.igUrl;
+  const g = p.url ? getGrowth(p.url) : null;
+  const growthHtml = g ? `<span class="growth-badge ${g.views>0?'up':'down'}">${g.views>0?'↑':'↓'}${fmt(Math.abs(g.views))} views</span>` : '';
+  const likesG = g && g.likes ? `<span class="growth-badge ${g.likes>0?'up':'down'}">${g.likes>0?'+':''}${fmt(g.likes)}</span>` : '';
+  return `
+    <a href="${url}" target="_blank" class="post-card ${isOA ? 'oa' : ''}" style="text-decoration:none;color:inherit;display:block;cursor:pointer">
+      <div class="pc-header">
+        <div class="pc-av" style="background:${inf.color}20;color:${inf.color}">${inf.name[0]}</div>
+        <div class="pc-name">${inf.name}</div>
+        ${p.collab ? '<span class="pc-oa-tag">Collab</span>' : (isOA ? '<span style="font-size:9px;font-weight:600;color:var(--text2);background:var(--surface2);padding:1px 5px;border-radius:3px">@mention</span>' : '')}
+        ${p.branded ? '<span style="font-size:9px;font-weight:700;color:var(--accent2);background:rgba(124,58,237,.1);padding:1px 5px;border-radius:3px;margin-left:4px">Branded</span>' : ''}
+        ${p.url ? '<span style="font-size:9px;color:var(--accent);margin-left:4px">🔗</span>' : ''}
+        ${growthHtml}
+        <div class="pc-time">${p.time}</div>
+      </div>
+      <div class="pc-body">${p.text}</div>
+      <div class="pc-metrics">
+        <div class="pc-m ${p.likes>5000?'hot':''}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          ${fmt(p.likes)}${likesG}
+        </div>
+        <div class="pc-m">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          ${fmt(p.comments)}
+        </div>
+        <div class="pc-m ${p.views>100000?'hot':''}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          ${fmt(p.views)}
+        </div>
+      </div>
+    </a>`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
+}
+
+// ===== START DATE =====
+function updateStartDate(idx, val) {
+  influencers[idx].startDate = val;
+  influencers[idx].weekly = calcWeekly(influencers[idx]);
+  renderStats();
+  renderList();
+  selectInf(idx);
+}
+
+// ===== ADD POST =====
+async function loadExtraPosts() {
+  try {
+    const res = await fetch('/api/posts');
+    if (!res.ok) return;
+    const db = await res.json();
+    // Merge extra posts into influencer data
+    for (const [handle, posts] of Object.entries(db)) {
+      const inf = influencers.find(i => i.handle === handle);
+      if (!inf) continue;
+      posts.forEach(p => {
+        const exists = inf.openartPosts.some(ep => ep.url === p.url && ep.time === p.time);
+        if (!exists) {
+          const post = { text: p.text, time: p.time, likes: p.likes, comments: p.comments, views: p.views, url: p.url };
+          if (p.isOpenArt) inf.openartPosts.push(post);
+          else inf.otherPosts.push(post);
+        }
+      });
+    }
+    // Recalc weekly
+    influencers.forEach(inf => { inf.weekly = calcWeekly(inf); });
+  } catch(_) {}
+}
+
+function showAddPost(handle) {
+  const html = `
+    <div id="addPostModal" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+      <div style="background:white;border-radius:12px;padding:24px;width:480px;max-width:90vw">
+        <h3 style="margin-bottom:16px;font-size:16px">Add Post for @${handle}</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <input id="ap-url" placeholder="Paste Instagram URL and press Fetch..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <button onclick="fetchPostMeta()" id="ap-fetch-btn" style="padding:8px 14px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Fetch</button>
+          </div>
+          <div id="ap-status" style="font-size:11px;color:var(--text2);display:none"></div>
+          <input id="ap-text" placeholder="Caption (auto-filled after fetch)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <div style="display:flex;gap:8px">
+            <input id="ap-time" placeholder="Date" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <input id="ap-likes" type="number" placeholder="Likes" style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <input id="ap-comments" type="number" placeholder="Comments" style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <input id="ap-views" type="number" placeholder="Views" style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          </div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <label style="font-size:12px;display:flex;align-items:center;gap:4px">
+              <input type="checkbox" id="ap-oa" checked> @OpenArt
+            </label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:4px">
+              <input type="checkbox" id="ap-branded"> Branded (promotes feature)
+            </label>
+            <span id="ap-type" style="font-size:10px;font-weight:700;color:var(--accent2);margin-left:auto"></span>
+          </div>
+          <button onclick="submitPost('${handle}')" style="padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">Add Post</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function fetchPostMeta() {
+  const url = document.getElementById('ap-url').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('ap-fetch-btn');
+  const status = document.getElementById('ap-status');
+  btn.textContent = '...';
+  btn.disabled = true;
+  status.style.display = 'block';
+  status.textContent = 'Fetching post metadata...';
+
+  try {
+    const res = await fetch('/api/fetch-post?url=' + encodeURIComponent(url));
+    const data = await res.json();
+
+    if (data.ok) {
+      if (data.caption) document.getElementById('ap-text').value = data.caption.substring(0, 200);
+      if (data.date) document.getElementById('ap-time').value = data.date;
+      if (data.likes) document.getElementById('ap-likes').value = data.likes;
+      if (data.comments) document.getElementById('ap-comments').value = data.comments;
+      document.getElementById('ap-oa').checked = data.mentionsOpenArt;
+      document.getElementById('ap-branded').checked = data.branded;
+      document.getElementById('ap-type').textContent = data.type ? (data.type === 'collab' ? 'Collab w/ OpenArt' : '@mention OpenArt') : '';
+      status.textContent = '✓ Fetched' + (data.likes ? ` — ${fmt(data.likes)} likes` : '') + (data.date ? `, ${data.date}` : '');
+      status.style.color = 'var(--green)';
+    } else {
+      status.textContent = '⚠ Could not fetch — Instagram may be blocking. Fill manually.';
+      status.style.color = 'var(--orange)';
+    }
+  } catch(e) {
+    status.textContent = '⚠ Fetch failed — fill manually';
+    status.style.color = 'var(--orange)';
+  }
+  btn.textContent = 'Fetch';
+  btn.disabled = false;
+}
+
+async function submitPost(handle) {
+  const post = {
+    handle,
+    url: document.getElementById('ap-url').value,
+    text: document.getElementById('ap-text').value,
+    time: document.getElementById('ap-time').value,
+    likes: document.getElementById('ap-likes').value,
+    comments: document.getElementById('ap-comments').value,
+    views: document.getElementById('ap-views').value,
+    isOpenArt: document.getElementById('ap-oa').checked
+  };
+  if (!post.time) return alert('Date required (e.g. Mar 26)');
+  await fetch('/api/posts', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(post) });
+  document.getElementById('addPostModal').remove();
+  // Reload
+  await loadExtraPosts();
+  renderStats();
+  renderList();
+  if (currentInf >= 0) selectInf(currentInf);
+}
+
+// ===== SCRAPER UI =====
+let scrapeRunning = false;
+
+function showToast(msg, isRunning = false) {
+  let toast = document.getElementById('scrapeToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'scrapeToast';
+    toast.className = 'scrape-toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = (isRunning ? '<div class="spinner"></div>' : '') + msg;
+  toast.classList.add('show');
+  if (!isRunning) setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+function hideToast() {
+  const toast = document.getElementById('scrapeToast');
+  if (toast) toast.classList.remove('show');
+}
+
+function setBtnsDisabled(disabled) {
+  scrapeRunning = disabled;
+  document.querySelectorAll('.scrape-btn').forEach(b => {
+    b.disabled = disabled;
+    if (disabled) b.classList.add('running');
+    else b.classList.remove('running');
+  });
+}
+
+async function runScrape(mode) {
+  if (scrapeRunning) return;
+  setBtnsDisabled(true);
+
+  const label = mode === 'deep' ? 'Deep scanning all profiles...' : 'Quick scanning all profiles...';
+  showToast(label, true);
+
+  try {
+    const res = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    // Poll for completion
+    pollScrape();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+    setBtnsDisabled(false);
+  }
+}
+
+async function runScrapeSingle() {
+  if (scrapeRunning) return;
+  const inf = influencers[currentIdx];
+  if (!inf) return;
+  setBtnsDisabled(true);
+  showToast(`Scanning @${inf.handle}...`, true);
+
+  try {
+    const res = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'single', handle: inf.handle })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    pollScrape();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+    setBtnsDisabled(false);
+  }
+}
+
+async function pollScrape() {
+  const check = async () => {
+    try {
+      const res = await fetch('/api/scrape');
+      const data = await res.json();
+      if (data.running) {
+        setTimeout(check, 3000);
+      } else {
+        setBtnsDisabled(false);
+        if (data.data) {
+          applyScrapeData(data.data);
+          const count = Object.keys(data.data).filter(k => !k.startsWith('_')).length;
+          showToast(`✅ Done! Updated ${count} profiles`);
+        } else {
+          showToast('✅ Scrape complete');
+        }
+      }
+    } catch (e) {
+      setTimeout(check, 3000);
+    }
+  };
+  setTimeout(check, 3000);
+}
+
+function applyScrapeData(data) {
+  let updated = 0;
+  influencers.forEach(inf => {
+    const scraped = data[inf.handle];
+    if (scraped && !scraped.error) {
+      if (scraped.followers > 0) {
+        inf.followers = scraped.followers;
+        updated++;
+      }
+    }
+  });
+  if (updated > 0) {
+    influencers.forEach(inf => { inf.weekly = calcWeekly(inf); });
+    renderStats();
+    renderList();
+    selectInf(currentIdx);
+  }
+}
+
+// ===== EXPORT CSV =====
+function exportCSV() {
+  const rows = [['Influencer','Handle','Followers','Status','Platform','Compliance','Total Collab Posts','Total @Mentions','Post URL','Post Date','Type','Branded','Likes','Comments','Views','Caption']];
+
+  influencers.forEach(inf => {
+    const comp = getCompliance(inf);
+    const compPct = comp.rate === null ? 'N/A' : Math.round(comp.rate * 100) + '%';
+    const collabCount = inf.openartPosts.filter(p => p.collab).length;
+    const mentionCount = inf.openartPosts.filter(p => !p.collab).length;
+
+    if (inf.openartPosts.length === 0) {
+      rows.push([inf.name, '@'+inf.handle, inf.followers, inf.status, inf.platform, compPct, collabCount, mentionCount, '', '', '', '', '', '', '', '']);
+    } else {
+      inf.openartPosts.forEach((p, i) => {
+        const caption = p.text.replace(/<[^>]*>/g, '').replace(/,/g, ';');
+        rows.push([
+          i === 0 ? inf.name : '', i === 0 ? '@'+inf.handle : '', i === 0 ? inf.followers : '', i === 0 ? inf.status : '', i === 0 ? inf.platform : '', i === 0 ? compPct : '',
+          i === 0 ? collabCount : '', i === 0 ? mentionCount : '',
+          p.url || '', p.time, p.collab ? 'Collab' : '@Mention', p.branded ? 'Yes' : 'No',
+          p.likes || '', p.comments || '', p.views || '', caption
+        ]);
+      });
+    }
+  });
+
+  // Summary row
+  const totalLikes = influencers.reduce((s,i) => s + i.openartPosts.reduce((ss,p) => ss + (p.likes||0), 0), 0);
+  const totalComments = influencers.reduce((s,i) => s + i.openartPosts.reduce((ss,p) => ss + (p.comments||0), 0), 0);
+  const totalViews = influencers.reduce((s,i) => s + i.openartPosts.reduce((ss,p) => ss + (p.views||0), 0), 0);
+  rows.push([]);
+  rows.push(['TOTAL','','','','','','','','','','','', totalLikes, totalComments, totalViews, '']);
+
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `openart-influencer-report-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ===== INIT =====
+async function init() {
+  await loadExtraPosts();
+  await loadSnapshots();
+  renderStats();
+  renderList();
+  selectInf(0);
+}
+init();
+</script>
+</body>
+</html>
