@@ -731,10 +731,31 @@ function selectInf(idx) {
       <button onclick="showAddPost('${inf.handle}')" style="padding:5px 12px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">+ Add Post</button>
     </div>
     ${inf.openartPosts.length === 0 ? '<div style="color:var(--text2);font-size:13px;padding:20px">No @OpenArt posts tracked yet</div>' : ''}
-    <div class="post-list">${inf.openartPosts.map(p => postCard(inf, {...p, isOA:true})).join('')}</div>
+    <div class="post-list">${inf.openartPosts.map((p,i) => postCard(inf, {...p, isOA:true, _idx:i})).join('')}</div>
   `;
 
   switchTab('openart');
+}
+
+function formatCaption(p) {
+  let raw = p.text.replace(/<[^>]*>/g, '').replace(/&#064;/g,'@').replace(/&amp;/g,'&');
+  // Already formatted with "Collab w/ ... —" or "@openart ..."
+  if (raw.match(/^(Collab w\/|@openart)/i)) {
+    const dash = raw.indexOf('—');
+    if (dash > 0) {
+      let title = raw.substring(dash + 1).trim();
+      if (title.length > 55) title = title.substring(0, 52) + '...';
+      return raw.substring(0, dash + 2) + title;
+    }
+    return raw.length > 80 ? raw.substring(0, 77) + '...' : raw;
+  }
+  // Raw caption — clean up and shorten
+  raw = raw.replace(/^['']s\s+/, '');
+  // Don't split on dots inside @handles
+  let safe = raw.replace(/@[\w.]+/g, m => m.replace(/\./g, '\u0000'));
+  let first = safe.split(/[.!?\n]/)[0].replace(/\u0000/g, '.').trim();
+  if (first.length > 55) first = first.substring(0, 52) + '...';
+  return first || raw.substring(0, 55);
 }
 
 function postCard(inf, p) {
@@ -754,7 +775,11 @@ function postCard(inf, p) {
         ${growthHtml}
         <div class="pc-time">${p.time}</div>
       </div>
-      <div class="pc-body">${p.text}</div>
+      <div class="pc-body">${formatCaption(p)}</div>
+      <div class="pc-actions" style="padding:4px 12px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:flex-end" onclick="event.preventDefault();event.stopPropagation()">
+        <button onclick="editPost('${inf.handle}',${p._idx!=null?p._idx:0})" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;font-family:inherit;color:var(--text2)">Edit</button>
+        <button onclick="deletePost('${inf.handle}','${(p.url||'').replace(/'/g,"\\'")}','${p.time}')" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;font-family:inherit;color:var(--red)">Delete</button>
+      </div>
       <div class="pc-metrics">
         <div class="pc-m ${p.likes>5000?'hot':''}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -797,9 +822,9 @@ async function loadExtraPosts() {
       const inf = influencers.find(i => i.handle === handle);
       if (!inf) continue;
       posts.forEach(p => {
-        const exists = inf.openartPosts.some(ep => ep.url === p.url && ep.time === p.time);
+        const exists = inf.openartPosts.some(ep => (ep.url && ep.url === p.url) || ep.time === p.time);
         if (!exists) {
-          const post = { text: p.text, time: p.time, likes: p.likes, comments: p.comments, views: p.views, url: p.url };
+          const post = { text: p.text, time: p.time, likes: parseInt(p.likes)||0, comments: parseInt(p.comments)||0, views: parseInt(p.views)||0, url: p.url, collab: p.collab || false, branded: p.branded || false };
           if (p.isOpenArt) inf.openartPosts.push(post);
           else inf.otherPosts.push(post);
         }
@@ -821,7 +846,6 @@ function showAddPost(handle) {
             <button onclick="fetchPostMeta()" id="ap-fetch-btn" style="padding:8px 14px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Fetch</button>
           </div>
           <div id="ap-status" style="font-size:11px;color:var(--text2);display:none"></div>
-          <div id="ap-login-hint" style="font-size:10px;color:var(--orange);display:none">First time? Log into Instagram in the browser window that pops up, then try Fetch again.</div>
           <input id="ap-text" placeholder="Caption (auto-filled after fetch)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
           <div style="display:flex;gap:8px">
             <input id="ap-time" placeholder="Date" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
@@ -831,11 +855,12 @@ function showAddPost(handle) {
           </div>
           <div style="display:flex;gap:12px;align-items:center">
             <label style="font-size:12px;display:flex;align-items:center;gap:4px">
-              <input type="checkbox" id="ap-oa" checked> @OpenArt
+              <input type="checkbox" id="ap-collab"> Collab (co-authored)
             </label>
             <label style="font-size:12px;display:flex;align-items:center;gap:4px">
-              <input type="checkbox" id="ap-branded"> Branded (promotes feature)
+              <input type="checkbox" id="ap-branded"> Branded (feature)
             </label>
+            <input type="hidden" id="ap-oa" value="true">
             <span id="ap-type" style="font-size:10px;font-weight:700;color:var(--accent2);margin-left:auto"></span>
           </div>
           <button onclick="submitPost('${handle}')" style="padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">Add Post</button>
@@ -859,24 +884,35 @@ async function fetchPostMeta() {
     const res = await fetch('/api/fetch-post?url=' + encodeURIComponent(url));
     const data = await res.json();
 
-    if (data.ok && data.caption) {
-      document.getElementById('ap-text').value = data.caption.substring(0, 200);
+    if (data.ok && (data.caption || data.isCollab)) {
+      // Auto-generate clean title
+      let rawCap = (data.caption || '').replace(/&#064;/g, '@').replace(/&amp;/g, '&').replace(/&#x27;/g, "'");
+      // Remove leading username
+      rawCap = rawCap.replace(/^[\w.]+\s*/, '');
+      // Get first short phrase — split on punctuation/newline, pick the shortest meaningful chunk
+      let sentences = rawCap.split(/[.!?\n,]/).map(s=>s.trim()).filter(s=>s.length>5);
+      let shortCap = sentences[0] || rawCap.substring(0,60);
+      // If still long, try splitting on common connectors
+      if (shortCap.length > 60) {
+        const parts = shortCap.split(/\s+(and|but|with|for|so|because|if|or|—)\s+/i);
+        shortCap = parts[0];
+      }
+      // Format as clean title
+      const prefix = data.isCollab ? "Collab w/ <span class='mention'>@openart_ai</span>" : "@<span class='mention'>openart_ai</span>";
+      const fullText = prefix + (shortCap ? ' — ' + shortCap : '');
+      document.getElementById('ap-text').value = fullText;
+
       if (data.date) document.getElementById('ap-time').value = data.date;
       if (data.likes > 1) document.getElementById('ap-likes').value = data.likes;
       if (data.comments) document.getElementById('ap-comments').value = data.comments;
       document.getElementById('ap-oa').checked = data.mentionsOpenArt || data.isCollab;
       document.getElementById('ap-branded').checked = data.branded;
       document.getElementById('ap-type').textContent = data.type === 'collab' ? 'Collab w/ OpenArt' : data.type === '@mention' ? '@mention OpenArt' : '';
-      status.textContent = '✓ ' + (data.isCollab ? 'Collab' : '@mention') + (data.likes > 1 ? ` — ${fmt(data.likes)} likes` : '') + (data.date ? `, ${data.date}` : '') + (data.features?.length ? ` — ${data.features.join(', ')}` : '');
+      status.textContent = '✓ ' + (data.isCollab ? 'Collab' : '@mention') + (data.likes > 1 ? ` — ${fmt(data.likes)} likes` : '') + (data.comments ? `, ${data.comments} comments` : '') + (data.features?.length ? ` — ${data.features.join(', ')}` : '');
       status.style.color = 'var(--green)';
       document.getElementById('ap-login-hint').style.display = 'none';
-    } else if (data.ok && !data.caption) {
-      // Browser opened but no data — likely not logged into IG
-      status.textContent = '⚠ Browser opened but got no data — need to log into Instagram first';
-      status.style.color = 'var(--orange)';
-      document.getElementById('ap-login-hint').style.display = 'block';
     } else {
-      status.textContent = '⚠ ' + (data.error || 'Fetching, browser is loading...');
+      status.textContent = '⚠ This post is restricted — fill in manually';
       status.style.color = 'var(--orange)';
     }
   } catch(e) {
@@ -896,9 +932,11 @@ async function submitPost(handle) {
     likes: document.getElementById('ap-likes').value,
     comments: document.getElementById('ap-comments').value,
     views: document.getElementById('ap-views').value,
-    isOpenArt: document.getElementById('ap-oa').checked
+    isOpenArt: true,
+    collab: document.getElementById('ap-collab').checked,
+    branded: document.getElementById('ap-branded').checked
   };
-  if (!post.time) return alert('Date required (e.g. Mar 26)');
+  if (!post.time) return alert('Date required (e.g. Apr 3)');
   await fetch('/api/posts', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(post) });
   document.getElementById('addPostModal').remove();
   // Reload
@@ -1028,6 +1066,71 @@ function applyScrapeData(data) {
   }
 }
 
+// ===== DELETE / EDIT POST =====
+async function deletePost(handle, url, time) {
+  if (!confirm('Delete this post?')) return;
+  const inf = influencers.find(i => i.handle === handle);
+  if (!inf) return;
+  const idx = inf.openartPosts.findIndex(p => (p.url && p.url === url) || p.time === time);
+  if (idx >= 0) {
+    inf.openartPosts.splice(idx, 1);
+    inf.weekly = calcWeekly(inf);
+    await fetch('/api/deleted', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({handle, url, time}) });
+    renderStats(); renderList(); selectInf(currentInf);
+  }
+}
+
+function editPost(handle, idx) {
+  const inf = influencers.find(i => i.handle === handle);
+  if (!inf || !inf.openartPosts[idx]) return;
+  const p = inf.openartPosts[idx];
+  const caption = p.text.replace(/<[^>]*>/g, '');
+  const html = `
+    <div id="editPostModal" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+      <div style="background:white;border-radius:12px;padding:24px;width:480px;max-width:90vw">
+        <h3 style="margin-bottom:16px;font-size:16px">Edit Post</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <input id="ep-url" value="${p.url||''}" placeholder="URL" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <input id="ep-text" value="${caption}" placeholder="Caption" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          <div style="display:flex;gap:8px">
+            <input id="ep-time" value="${p.time}" placeholder="Date" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <input id="ep-likes" type="number" value="${p.likes||''}" placeholder="Likes" style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <input id="ep-comments" type="number" value="${p.comments||''}" placeholder="Comments" style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            <input id="ep-views" type="number" value="${p.views||''}" placeholder="Views" style="width:80px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          </div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <label style="font-size:12px;display:flex;align-items:center;gap:4px">
+              <input type="checkbox" id="ep-collab" ${p.collab?'checked':''}> Collab
+            </label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:4px">
+              <input type="checkbox" id="ep-branded" ${p.branded?'checked':''}> Branded
+            </label>
+          </div>
+          <button onclick="saveEditPost('${handle}',${idx})" style="padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">Save</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function saveEditPost(handle, idx) {
+  const inf = influencers.find(i => i.handle === handle);
+  if (!inf) return;
+  const p = inf.openartPosts[idx];
+  p.url = document.getElementById('ep-url').value;
+  p.text = document.getElementById('ep-text').value;
+  p.time = document.getElementById('ep-time').value;
+  p.likes = parseInt(document.getElementById('ep-likes').value) || 0;
+  p.comments = parseInt(document.getElementById('ep-comments').value) || 0;
+  p.views = parseInt(document.getElementById('ep-views').value) || 0;
+  p.collab = document.getElementById('ep-collab').checked;
+  p.branded = document.getElementById('ep-branded').checked;
+  inf.weekly = calcWeekly(inf);
+  await fetch('/api/edits', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({handle, idx, post: p}) });
+  document.getElementById('editPostModal').remove();
+  renderStats(); renderList(); selectInf(currentInf);
+}
+
 // ===== EXPORT CSV =====
 function exportCSV() {
   const signed = influencers.filter(i => i.status === 'signed');
@@ -1111,10 +1214,34 @@ function exportCSV() {
   a.click();
 }
 
+// ===== APPLY DELETIONS & EDITS ON LOAD =====
+async function applyDeletionsAndEdits() {
+  try {
+    // Remove deleted posts
+    const deleted = await (await fetch('/api/deleted')).json();
+    deleted.forEach(d => {
+      const inf = influencers.find(i => i.handle === d.handle);
+      if (!inf) return;
+      const idx = inf.openartPosts.findIndex(p => (p.url && p.url === d.url) || p.time === d.time);
+      if (idx >= 0) inf.openartPosts.splice(idx, 1);
+    });
+    // Apply edits
+    const edits = await (await fetch('/api/edits')).json();
+    for (const [key, edit] of Object.entries(edits)) {
+      const [handle, idxStr] = key.split(':');
+      const inf = influencers.find(i => i.handle === handle);
+      if (!inf || !inf.openartPosts[parseInt(idxStr)]) continue;
+      Object.assign(inf.openartPosts[parseInt(idxStr)], edit);
+    }
+  } catch(_) {}
+}
+
 // ===== INIT =====
 async function init() {
+  await applyDeletionsAndEdits();
   await loadExtraPosts();
   await loadSnapshots();
+  influencers.forEach(inf => { inf.weekly = calcWeekly(inf); });
   renderStats();
   renderList();
   selectInf(0);

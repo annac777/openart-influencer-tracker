@@ -228,6 +228,53 @@ app.get('/api/scrape/stream', (req, res) => {
   req.on('close', () => clearInterval(interval));
 });
 
+// ===== DELETED POSTS (persist deletions) =====
+const DEL_FILE = path.join(DATA_DIR, 'deleted.json');
+
+function loadDeleted() {
+  if (fs.existsSync(DEL_FILE)) return JSON.parse(fs.readFileSync(DEL_FILE, 'utf8'));
+  return [];
+}
+
+function saveDeleted(list) {
+  fs.writeFileSync(DEL_FILE, JSON.stringify(list, null, 2));
+}
+
+app.get('/api/deleted', (req, res) => res.json(loadDeleted()));
+
+app.post('/api/deleted', (req, res) => {
+  const { handle, url, time } = req.body;
+  if (!handle) return res.status(400).json({ error: 'handle required' });
+  const list = loadDeleted();
+  list.push({ handle, url: url || '', time: time || '', deletedAt: new Date().toISOString() });
+  saveDeleted(list);
+  res.json({ ok: true });
+});
+
+// ===== EDITS (persist edits to hardcoded posts) =====
+const EDIT_FILE = path.join(DATA_DIR, 'edits.json');
+
+function loadEdits() {
+  if (fs.existsSync(EDIT_FILE)) return JSON.parse(fs.readFileSync(EDIT_FILE, 'utf8'));
+  return {};
+}
+
+function saveEdits(data) {
+  fs.writeFileSync(EDIT_FILE, JSON.stringify(data, null, 2));
+}
+
+app.get('/api/edits', (req, res) => res.json(loadEdits()));
+
+app.post('/api/edits', (req, res) => {
+  const { handle, idx, post } = req.body;
+  if (!handle || idx == null) return res.status(400).json({ error: 'handle and idx required' });
+  const edits = loadEdits();
+  const key = handle + ':' + idx;
+  edits[key] = { ...post, editedAt: new Date().toISOString() };
+  saveEdits(edits);
+  res.json({ ok: true });
+});
+
 // ===== METRIC SNAPSHOTS (time-series tracking) =====
 const SNAP_FILE = path.join(DATA_DIR, 'snapshots.json');
 
